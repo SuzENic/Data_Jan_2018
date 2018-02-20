@@ -34,5 +34,42 @@ word_prog <- function(){
 			      ### logistic regression
 			      ### Principal Component Analysis
 			      ### Tensor Flow
+	  data2=as.data.frame(read.table("model1.txt",skip=1, fill = TRUE)) ### gives me the raw vectors
 
+	  data <- read.csv("hate_speech/data/labeled_data.csv")
+	  #tw1<- "bad bitches is the only thing that i like"
+	  for (m in 1:length(data$tweet)) {
+	  	  tw1<- data[m,]$tweet
+		  tw1=tolower(tw1)
+		  tw1 = gsub("[[:punct:]]", "", tw1) 		  
+	  	  tw1 <- strsplit(tw1, " ")
+		  	  	# data2[which(data2$V1==tw1[[1]][1])]
+				# for (i in (1:9)) {tw2[i] <- rbind(data2[which(data2$V1==tw1[[1]][i])]) }
+	  	  for (i in (1:length(tw1[[1]]))){
+	       		j <- which(data2$V1==tw1[[1]][i])
+			tw2 <- matrix(0.0, length(tw1[[1]]), 300)
+		        if (length(j) != 0) {
+		       		for (k in (1:300)){
+		       	   	    tw2[i, k]<- (data2[j, k])
+		       		}
+		        }
+		  }	  
+	  	  tw3[m,] <- apply(tw2,2,mean)
+		  tw3[m,1] <- data[m,]$class
+	  }
+	  write.table(tw3,"text_cats.txt")
+
+	  tw3=as.data.frame(read.table("text_cats.txt", fill = TRUE))
+	  colnames(tw3) <- c("Type", paste0("V", 2:300)) 
+	  tw3 <- as.data.frame(tw3)
+	  tw3$Type <- as.factor(tw3$Type)
+	  source("myplclust.R")
+	  distMat <- dist(tw3[,2:300])
+	  hclustering <- hclust(distMat)
+	  myplclust(hclustering, lab.col = unclass(tw3$Type))
+
+train<- tw3[1:20000,]
+ test<- tw3[20001:24783,]
+model = multinom(Type~.,data=train)
+fitting_results <- predict(model,newdata=test,type='response')
 }
